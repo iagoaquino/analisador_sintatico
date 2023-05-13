@@ -26,7 +26,7 @@ class Automato:
             transicao.append(estado_transicao)
             self.estados[estado_atual].transicoes.append(transicao)
         else:
-            print("erro lexico encontrado na transição: "+alfabeto+ ",no estado:"+str(estado_atual)) 
+            print("erro não foi possivel computar") 
 
     def adicionar_transicao_estrela(self,estado_atual,alfabeto,estado_transicao):
         if alfabeto in self.alfabeto and estado_transicao in range(len(self.estados)):
@@ -35,7 +35,7 @@ class Automato:
             transicao.append(estado_transicao)
             self.estados[estado_atual].transicoes_estrela.append(transicao)
         else:
-            print("erro lexico encontrado na transição estrela: "+alfabeto) 
+            print("erro não foi possivel computar") 
 
     def definir_aceitacao(self,num_estado):
         self.estados_aceitacao.append(num_estado)

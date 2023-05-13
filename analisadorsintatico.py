@@ -3,7 +3,7 @@ from classes.token import Token
 letras = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 numeros = "1234567890"
 simbolos = "<>=+-*/&|:()!"
-texto="a:=a&b"
+texto="a:=a*b"
 tokens = []
 alfabeto = letras+numeros+simbolos
 def criar_automato(alfabeto,qtd_estados):
@@ -78,7 +78,42 @@ def criar_automato(alfabeto,qtd_estados):
     analisador_lexico.definir_aceitacao(23)
     analisador_lexico.mostrar_aceitacao()
     return analisador_lexico
-
+def formar_token(estado_atual,valor_token):
+    if estado_atual == 3 or estado_atual == 5 or estado_atual == 6 or estado_atual == 9 or estado_atual == 14 or estado_atual == 16:
+        #RO -> relational operator
+        token = Token("RO",valor_token)
+        tokens.append(token)
+        valor_token = ""
+    if estado_atual == 11 or estado_atual == 12:
+        #MO -> multiply operator
+        token = Token("MO",valor_token)
+        tokens.append(token)
+        valor_token = ""
+    if estado_atual == 17 or estado_atual == 18:
+        #AO -> adding operator
+        token = Token("AO",valor_token)
+        tokens.append(token)
+        valor_token = ""
+        #AS -> assigment symbol
+    if estado_atual == 20:
+        token = Token("AS",valor_token)
+        tokens.append(token)
+        valor_token = ""
+        #not -> not
+    if estado_atual == 21:
+        token = Token("not",valor_token)
+        tokens.append(token)
+        valor_token = ""
+        #AP ->open parenteses
+    if estado_atual == 22:
+        token = Token("OP",valor_token)
+        tokens.append(token)
+        valor_token = ""
+    if estado_atual == 23:
+        #FP -> close parenteses
+        token = Token("CP",valor_token)
+        tokens.append(token)
+        valor_token = ""
 def gerar_tokens():
     #inicialmente cria o automato
     automato = criar_automato(alfabeto,24)
@@ -94,49 +129,13 @@ def gerar_tokens():
         else:
             estado_atual,validador = automato.fazer_transicao(estado_atual,letra)
         if automato.checar_aceitacao(estado_atual) == 1:
-            if estado_atual == 3 or estado_atual == 5 or estado_atual == 6 or estado_atual == 9 or estado_atual == 14 or estado_atual == 16:
-                #RO -> relational operator
-                token = Token("RO",valor_token)
-                tokens.append(token)
-                valor_token = ""
-            if estado_atual == 11 or estado_atual == 12:
-                #MO -> multiply operator
-                token = Token("MO",valor_token)
-                tokens.append(token)
-                valor_token = ""
-            if estado_atual == 17 or estado_atual == 18:
-                #AO -> adding operator
-                token = Token("AO",valor_token)
-                tokens.append(token)
-                valor_token = ""
-                #AS -> assigment symbol
-            if estado_atual == 20:
-                token = Token("AS",valor_token)
-                tokens.append(token)
-                valor_token = ""
-                #not -> not
-            if estado_atual == 21:
-                token = Token("not",valor_token)
-                tokens.append(token)
-                valor_token = ""
-                #AP ->open parenteses
-            if estado_atual == 22:
-                token = Token("OP",valor_token)
-                tokens.append(token)
-                valor_token = ""
-            if estado_atual == 23:
-                #FP -> close parenteses
-                token = Token("CP",valor_token)
-                tokens.append(token)
-                valor_token = ""
+            formar_token(estado_atual,valor_token)
+            valor_token = ""
             estado_atual = 0
-        #caso não tenha feito transição comun ainda tem chance de fazer transição estrela
+            validador = 1
         if validador == 0:
             estado_atual,validador = automato.fazer_transicao_estrela(estado_atual,letra)
             if validador == 1:
-                #caso ele tenha feito uma transição estrela significa que a letra lida nessa iteração não faz parte do token atual
-                #porem como ela foi adcionada a palavra que será o valor do token isso estaria incorreto
-                #essa linha remove a ultima letra da palavra que será o valor do token
                 valor_token = valor_token[:-1]
                 if estado_atual == 2:
                     token = Token("ID",valor_token)
@@ -146,41 +145,12 @@ def gerar_tokens():
                     token = Token("RO",valor_token)
                     tokens.append(token)
                     valor_token = ""
-                #apos feito isso a letra é recolocada a palavra que será formada pelo proximo token que até então estava vazia
                 valor_token = valor_token+letra
-                #essa foi a forma que eu fiz a segunda parte da transição estrela
-                #setei o estado para 0 e refiz todos os passos de uma transição normal incluindo a checagem de aceitação
                 estado_atual = 0
                 estado_atual,validador = automato.fazer_transicao(estado_atual,letra)
                 if automato.checar_aceitacao(estado_atual) == 1:
-                    if estado_atual == 3 or estado_atual == 5 or estado_atual == 6 or estado_atual == 9 or estado_atual == 14 or estado_atual == 16:
-                        token = Token("RO",valor_token)
-                        tokens.append(token)
-                        valor_token = ""
-                    if estado_atual == 11 or estado_atual == 12:
-                        token = Token("MO",valor_token)
-                        tokens.append(token)
-                        valor_token = ""
-                    if estado_atual == 17 or estado_atual == 18:
-                        token = Token("AO",valor_token)
-                        tokens.append(token)
-                        valor_token = ""
-                    if estado_atual == 20:
-                        token = Token("AS",valor_token)
-                        tokens.append(token)
-                        valor_token = ""
-                    if estado_atual == 21:
-                        token = Token("not",valor_token)
-                        tokens.append(token)
-                        valor_token = ""
-                    if estado_atual == 22:
-                        token = Token("OP",valor_token)
-                        tokens.append(token)
-                        valor_token = ""
-                    if estado_atual == 23:
-                        token = Token("CP",valor_token)
-                        tokens.append(token)
-                        valor_token = ""
+                    formar_token(estado_atual,valor_token)
+                    valor_token = ""
                     estado_atual = 0
             else:
                 # caso ele não tenha sido capaz de fazer a transição comun ou estrela significa que a letra não tem transição naquele estado significando erro lexico
@@ -194,8 +164,6 @@ def gerar_tokens():
         token = Token("RO",valor_token)
         tokens.append(token)
         valor_token = ""
-
-
 #chamando todo codigo anterior
 gerar_tokens()
 print("entrada:"+texto)
