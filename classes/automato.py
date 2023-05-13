@@ -40,24 +40,31 @@ class Automato:
     def definir_aceitacao(self,num_estado):
         self.estados_aceitacao.append(num_estado)
 
-    def finalizou_aceitou(self,estado_atual):
+    def checar_aceitacao(self,estado_atual):
         if estado_atual in self.estados_aceitacao:
             return 1
         return 0
 
     def fazer_transicao(self,estado_atual,alfabeto):
         novo_estado = estado_atual
+        fez_transicao = 0
         for i in range(len(self.estados[estado_atual].transicoes)):
             if alfabeto == self.estados[estado_atual].transicoes[i][0]:
                 novo_estado = self.estados[estado_atual].transicoes[i][1]
-        return novo_estado
+                fez_transicao = 1
+        if fez_transicao == 1:
+            return novo_estado,1
+        else:
+            return novo_estado,0
     
     def fazer_transicao_estrela(self,estado_atual,letra):
+        novo_estado = estado_atual
         for i in range(len(self.estados[estado_atual].transicoes_estrela)):
             #print(letra+", transicoes estrela"+str(self.estados[estado_atual].transicoes_estrela[i][0]))
             if letra == self.estados[estado_atual].transicoes_estrela[i][0]:
-                return 1
-        return 0
+                novo_estado = self.estados[estado_atual].transicoes_estrela[i][1]
+                return novo_estado,1
+        return novo_estado,0
             
     def mostrar_alfabeto(self):
         print(self.alfabeto)
