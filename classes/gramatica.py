@@ -1,5 +1,6 @@
 from token import Token
 from automato import Automato
+from arvore import Arvore,No
 letras = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 numeros = "1234567890"
 simbolos = "<>=+-*/&|:()!"
@@ -86,8 +87,10 @@ class Gramatica:
                     return 0
     def match(self,token):
         if self.token.tipo == token:
+            filho = self.token.valor
             if self.get_next_token() != 0:
                 print("token: tipo("+self.token.tipo+"),valor("+self.token.valor+") na posição:"+str(self.position))
+            return filho
         else:
             return 0
     def checar_final(self):
@@ -109,147 +112,257 @@ class Gramatica:
         self.automato = automato
     
     def assignment(self):
-        if self.identifier() == 0:
+        no_pai = No("NULL")
+        no_filho = self.match("ID")
+        if no_filho == 0:
             return 0
-        
-        if self.checar_final() == 0:
+        else:
+            no_pai.filhos.append(No(no_filho))
+        no_filho = self.match("AS")
+        if no_filho == 0:
             return 0
-        
-        if self.match("AS") == 0:
+        else:
+            no_pai.filhos.append(No(no_filho))
+        no_filho = self.expression()
+        if no_filho == 0:
             return 0
-        
-        if self.checar_final() == 0:
-            return 0
-        
-        if self.expression() == 0:
-            return 0
-        return 1
+        else:
+            no_filho.valor = "expression"
+            no_pai.filhos.append(no_filho)
+        return no_pai
     
     def expression(self):
-        if self.simple_expression() == 0:
+        no_pai = No("NULL")
+        
+        no_filho = self.simple_expression()
+        if no_filho == 0:
             return 0
-        if self.complemento_1() == 0:
+        else:
+            no_filho.valor = "simple expression"
+            no_pai.filhos.append(no_filho)
+        no_filho = self.complemento_1()
+        if no_filho == 0:
             return 0
-        return 1
+        elif no_filho != 1:
+            no_filho.valor = "complemento 1"
+            no_pai.filhos.append(no_filho)
+        return no_pai
     
     def complemento_1(self):
         if self.checar_final() == 0 and self.get_token().tipo == "RO":
             return 0
         elif self.checar_final != 0 and self.get_token().tipo == "RO":
-            self.relational_operator()
-            if self.simple_expression() == 0:
+            no_pai = No("NULL")
+            no_filho = self.match("RO")
+            if no_filho == 0:
                 return 0
-            return 1
+            else:
+                no_pai.filhos.append(no_filho)
+                no_filho = self.simple_expression()
+            if no_filho == 0:
+                return 0
+            else:
+                no_filho.valor = "simple expression"
+                no_pai.filhos.append(no_filho)
+            return no_pai
         else:
             return 1
 
     def simple_expression(self):
-        if self.sign() == 0:
+        no_pai = No("NULL")
+        no_filho = self.sign()
+        if no_filho != 1:
+            no_pai.filhos.append(no_filho)
+        no_filho = self.term()
+        if no_filho == 0:
             return 0
-        if self.term() == 0:
+        else:
+            no_filho.valor = "term"
+            no_pai.filhos.append(no_filho)
+        no_filho = self.complemento_2()
+        if no_filho == 0:
             return 0
-        if self.complemento_2() == 0:
-            return 0
-        return 1
-    
+        elif no_filho != 1:
+            no_filho.valor = "complemento 2"
+            no_pai.filhos.append(no_filho)
+        return no_pai
     def complemento_2(self):
         if self.checar_final == 0 and self.get_token().tipo == "AO":
             return 0
         elif self.checar_final != 0 and self.get_token().tipo == "AO":
-            self.adding_operator()
-            if self.factor() == 0:
+            no_pai = No("NULL")
+            no_filho = self.match("AO")
+            if no_filho == 0:
                 return 0
-            if self.complemento_2() == 0:
+            else:
+                no_pai.filhos.append(no_filho)
+            no_filho = self.factor()
+            if no_filho == 0:
                 return 0
-            return 1
+            else:
+                no_filho.valor = "factor"
+                no_pai.filhos.append(no_filho) 
+                no_filho = self.complemento_2()
+                if no_filho == 0:
+                    return 0
+                elif no_filho != 1:
+                    no_filho.valor = "complemento 2"
+                    no_pai.filhos.append(no_filho)
+            return no_pai
         else:
             return 1
     def term(self):
-        if self.factor() == 0:
+        no_pai = No("NULL")
+        no_filho = self.factor()
+        if no_filho == 0:
             return 0
-        if self.complemento_3() == 0:
+        else:
+            no_filho.valor = "factor"
+            no_pai.filhos.append(no_filho)
+        no_filho = self.complemento_3()
+        if no_filho == 0:
             return 0
-        return 1
+        elif no_filho !=1:
+            no_filho.valor = "complemento 3"
+            no_pai.filho.append(no_filho)
+        return no_pai
     def complemento_3(self):
         if self.checar_final == 0 and self.get_token().tipo == "MO":
             return 0
         elif self.checar_final != 0 and self.get_token().tipo == "MO":
-            if self.factor() == 0:
+            no_pai = No("NULL")
+            no_filho = self.match("MO")
+            if no_filho == 0:
                 return 0
-            if self.complemento_3() == 0:
+            else:
+                no_pai.filhos.append(no_filho)
+            no_filho = self.factor()
+            if no_filho == 0:
                 return 0
-            return 1
+            else:
+                no_filho.valor = "factor"
+                no_pai.filhos.append(no_filho) 
+                no_filho = self.complemento_3()
+                if no_filho == 0:
+                    return 0
+                elif no_filho != 1:
+                    no_filho.valor = "complemento 3"
+                    no_pai.filhos.append(no_filho)
+            return no_pai
         else:
             return 1
         
     def factor(self):
         if self.get_token().tipo == "ID":
-            if self.identifier() == 0:
+            no_pai = No("NULL")
+            token = self.identifier()
+            if token == 0:
                 return 0
             else:
-                return 1
+                no_filho = No(token)
+                no_pai.filhos.append(no_filho)
+            return no_pai
         if self.get_token().tipo == "OP":
-            if self.match("OP") == 0:
-                return 0
-            if self.expression() == 0:
-                return 0
-            if self.match("CP") == 0:
+            no_pai = No("NULL")
+            token = self.match("OP")
+            if token == 0:
                 return 0
             else:
-                return 1
+                no_pai.filhos.append(No(token))
+            no_filho2 = self.expression()
+            if no_filho2 == 0:
+                return 0
+            else:
+                no_filho2.valor = "Expression"
+                no_pai.filhos.append(no_filho2)
+            token = self.match("CP")
+            if token == 0:
+                return 0
+            else:
+                no_pai.filhos.append(No(token))
+            return no_pai
         if self.get_token().tipo == "not":
-            if self.match("not") == 0:
-                return 0
-            if self.factor() == 0:
+            no_pai = No("null")
+            token = self.match("not")
+            if token == 0:
                 return 0
             else:
-                return 1
+                no_pai.filhos.append(No(token))
+                no_filho = self.factor()
+                if no_filho == 0:
+                    return 0
+                else:
+                    no_filho.valor = "factor"
+                    no_pai.filhos.append(no_filho)
+                return no_pai
         if self.get_token().tipo == "digit":
-            if self.match("digit") == 0:
-                return 0
-            if self.get_token.valor =="-" or self.match("adding_operador") == 0:
+            no_pai = No("NULL")
+            token = self.match("digit")
+            if token == 0:
                 return 0
             else:
-                return 1
+                no_pai.filhos.append(No(token))
+            if self.get_token().valor =="-" or self.get_token().tipo != "AO":
+                return 0
+            else:
+                token = self.match("OP")
+                if token == 0:
+                    return 0
+                else:
+                    no_pai.filhos.append(No(token))
+            return no_pai
                 
     def identifier(self):
-        if self.match("ID") == 0:
+        resp = self.match("ID")
+        if resp == 0:
             return 0
         else:
-            return 1
+            return resp
     def sign(self):
+        resp = ""
         if self.get_token().tipo == "AO":
-            self.match("AO")
+            resp = self.match("AO")
+            return resp
         else:
             return 1
+        
     def relational_operator(self):
-        if self.match("RO") == 0:
+        resp = self.match("RO")
+        if resp == 0:
             return 0
         else:
-            return 1
+            return resp
     def adding_operator(self):
-        if self.match("AO") == 0:
+        resp = self.match("AO")
+        if resp == 0:
             return 0
         else:
-            return 1
+            return resp
+        
     def multiply_operator(self):
-        if self.match("MO") == 0:
+        resp = self.match("MO")
+        if resp == 0:
             return 0
         else:
-            return 1
+            return resp
     def digit(self):
-        if self.match("digit") == 0:
+        resp = self.match("digit")
+        if resp == 0:
             return 0
         else:
-            return 1
+            return resp
     def aplicar_analise(self):
         self.get_next_token()
         print("token: tipo("+self.token.tipo+"),valor("+self.token.valor+")")
-        if self.assignment() == 0:
-            print("erro sintatico")
-            return 0
+        no_raiz = self.assignment()
+        if no_raiz == 0:
+            print("erro de sintaxe")
         else:
+            no_raiz.valor = "assigment"
+            arvore = Arvore()
+            arvore.definir_raiz(no_raiz)
             print("sintaxe correta")
+        arvore.mostrar_arvore(arvore.raiz)
 
 
 
