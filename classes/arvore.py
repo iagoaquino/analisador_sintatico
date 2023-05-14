@@ -10,8 +10,7 @@ class Arvore:
             self.raiz = no
     def mostrar_arvore(self,no):
         if type(no) is not str:
-            print("pai:"+no.valor+",filhos(")
-            nome = ""
+            nome = "pai:"+no.valor+",filhos("
             for filho in no.filhos:
                 if type(filho) == str:
                     nome = nome +" "+filho

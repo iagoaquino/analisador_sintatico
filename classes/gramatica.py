@@ -50,7 +50,8 @@ class Gramatica:
         return token
     def get_next_token(self):
         if self.position == len(self.entrada):
-            return 0
+            token = Token("NULL","NULL")
+            self.set_token(token)
         else:
             atual_position = self.position
             estado_atual = 0
@@ -61,6 +62,7 @@ class Gramatica:
                 estado_atual,validador = self.automato.fazer_transicao(estado_atual,self.entrada[atual_position])
                 if self.automato.checar_aceitacao(estado_atual) == 1:
                     self.set_token(self.formar_token(estado_atual,valor_token))
+                    estado_atual = 0
                     self.position = atual_position+1
                     break
                 if validador == 0:
@@ -68,6 +70,7 @@ class Gramatica:
                     if validador == 1:
                         valor_token = valor_token[:-1]
                         self.set_token(self.formar_token(estado_atual,valor_token))
+                        estado_atual = 0
                         self.position = atual_position
                         break
                     else:
@@ -83,12 +86,14 @@ class Gramatica:
                     self.set_token(Token("RO",valor_token))
                     valor_token = ""
                 elif estado_atual != 0:
-                    print("erro lexico:estado atual"+ str(estado_atual))
+                    print("erro lexico:estado atual "+ str(estado_atual))
                     return 0
     def match(self,token):
         if self.token.tipo == token:
             filho = self.token.valor
-            if self.get_next_token() != 0:
+            if self.get_next_token() == 0:
+                return 0
+            if self.get_token() != "NULL":
                 print("token: tipo("+self.token.tipo+"),valor("+self.token.valor+") na posição:"+str(self.position))
             return filho
         else:
@@ -113,11 +118,12 @@ class Gramatica:
     
     def assignment(self):
         no_pai = No("NULL")
-        no_filho = self.match("ID")
+        no_filho = self.identifier()
         if no_filho == 0:
             return 0
         else:
-            no_pai.filhos.append(No(no_filho))
+            no_filho.valor = "identifier"
+            no_pai.filhos.append(no_filho)
         no_filho = self.match("AS")
         if no_filho == 0:
             return 0
@@ -133,7 +139,6 @@ class Gramatica:
     
     def expression(self):
         no_pai = No("NULL")
-        
         no_filho = self.simple_expression()
         if no_filho == 0:
             return 0
@@ -153,10 +158,11 @@ class Gramatica:
             return 0
         elif self.checar_final != 0 and self.get_token().tipo == "RO":
             no_pai = No("NULL")
-            no_filho = self.match("RO")
+            no_filho = self.relational_operator()
             if no_filho == 0:
                 return 0
             else:
+                no_filho.valor = "relational operator"
                 no_pai.filhos.append(no_filho)
                 no_filho = self.simple_expression()
             if no_filho == 0:
@@ -186,21 +192,23 @@ class Gramatica:
             no_filho.valor = "complemento 2"
             no_pai.filhos.append(no_filho)
         return no_pai
+
     def complemento_2(self):
         if self.checar_final == 0 and self.get_token().tipo == "AO":
             return 0
         elif self.checar_final != 0 and self.get_token().tipo == "AO":
             no_pai = No("NULL")
-            no_filho = self.match("AO")
+            no_filho = self.adding_operator()
             if no_filho == 0:
                 return 0
             else:
+                no_filho.valor = "adding operator"
                 no_pai.filhos.append(no_filho)
-            no_filho = self.factor()
+            no_filho = self.term()
             if no_filho == 0:
                 return 0
             else:
-                no_filho.valor = "factor"
+                no_filho.valor = "term"
                 no_pai.filhos.append(no_filho) 
                 no_filho = self.complemento_2()
                 if no_filho == 0:
@@ -224,17 +232,18 @@ class Gramatica:
             return 0
         elif no_filho !=1:
             no_filho.valor = "complemento 3"
-            no_pai.filho.append(no_filho)
+            no_pai.filhos.append(no_filho)
         return no_pai
     def complemento_3(self):
         if self.checar_final == 0 and self.get_token().tipo == "MO":
             return 0
         elif self.checar_final != 0 and self.get_token().tipo == "MO":
             no_pai = No("NULL")
-            no_filho = self.match("MO")
+            no_filho = self.multiply_operator()
             if no_filho == 0:
                 return 0
             else:
+                no_filho.valor = "multiply operator"
                 no_pai.filhos.append(no_filho)
             no_filho = self.factor()
             if no_filho == 0:
@@ -248,18 +257,18 @@ class Gramatica:
                 elif no_filho != 1:
                     no_filho.valor = "complemento 3"
                     no_pai.filhos.append(no_filho)
-            return no_pai
+            return no_pai 
         else:
             return 1
         
     def factor(self):
         if self.get_token().tipo == "ID":
             no_pai = No("NULL")
-            token = self.identifier()
-            if token == 0:
+            no_filho = self.identifier()
+            if no_filho == 0:
                 return 0
             else:
-                no_filho = No(token)
+                no_filho.valor = "identifier"
                 no_pai.filhos.append(no_filho)
             return no_pai
         if self.get_token().tipo == "OP":
@@ -305,19 +314,23 @@ class Gramatica:
             if self.get_token().valor =="-" or self.get_token().tipo != "AO":
                 return 0
             else:
-                token = self.match("OP")
+                token = self.match("AO")
                 if token == 0:
                     return 0
                 else:
                     no_pai.filhos.append(No(token))
             return no_pai
+        else:
+            return 0
                 
     def identifier(self):
-        resp = self.match("ID")
-        if resp == 0:
+        no_pai = No("NULL")
+        no_filho = self.match("ID")
+        if no_filho == 0:
             return 0
         else:
-            return resp
+            no_pai.filhos.append(No(no_filho))
+        return no_pai
     def sign(self):
         resp = ""
         if self.get_token().tipo == "AO":
@@ -327,42 +340,50 @@ class Gramatica:
             return 1
         
     def relational_operator(self):
-        resp = self.match("RO")
-        if resp == 0:
+        no_pai = No("NULL")
+        no_filho = self.match("RO")
+        if no_filho == 0:
             return 0
         else:
-            return resp
+            no_pai.filhos.append(No(no_filho))
+        return no_pai
     def adding_operator(self):
-        resp = self.match("AO")
-        if resp == 0:
+        no_pai = No("NULL")
+        no_filho = self.match("AO")
+        if no_filho == 0:
             return 0
         else:
-            return resp
+            no_pai.filhos.append(No(no_filho))
+        return no_pai
         
     def multiply_operator(self):
-        resp = self.match("MO")
-        if resp == 0:
+        no_pai = No("NULL")
+        no_filho = self.match("MO")
+        if no_filho == 0:
             return 0
         else:
-            return resp
+            no_pai.filhos.append(No(no_filho))
+        return no_pai
     def digit(self):
-        resp = self.match("digit")
-        if resp == 0:
+        no_pai = No("NULL")
+        no_filho = self.match("digit")
+        if no_filho == 0:
             return 0
         else:
-            return resp
+            no_pai.filhos.append(No(no_filho))
+        return no_pai
     def aplicar_analise(self):
         self.get_next_token()
         print("token: tipo("+self.token.tipo+"),valor("+self.token.valor+")")
         no_raiz = self.assignment()
-        if no_raiz == 0:
+        if no_raiz == 0 or self.token.valor != "NULL":
             print("erro de sintaxe")
         else:
             no_raiz.valor = "assigment"
             arvore = Arvore()
             arvore.definir_raiz(no_raiz)
             print("sintaxe correta")
-        arvore.mostrar_arvore(arvore.raiz)
+            arvore.mostrar_arvore(arvore.raiz)
 
 
 
@@ -450,5 +471,5 @@ def criar_automato(alfabeto,qtd_estados):
     return analisador_lexico
 gramatica = Gramatica()
 gramatica.set_automato(criar_automato(alfabeto,26))
-gramatica.set_entrada("b:=a+b+c>b")
+gramatica.set_entrada("b:=a+(c+b)*c||b")
 gramatica.aplicar_analise()
