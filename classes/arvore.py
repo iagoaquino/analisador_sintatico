@@ -15,7 +15,7 @@ class Arvore:
                 if type(filho) == str:
                     nome = nome +" "+filho
                 else:
-                    nome = nome +" "+filho.valor
+                    nome = nome +" "+filho.valor+" "
             print(nome +")")
             for filho in no.filhos:
                 self.mostrar_arvore(filho)
