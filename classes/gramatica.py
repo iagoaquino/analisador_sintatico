@@ -106,6 +106,8 @@ class Gramatica:
     def match(self,token):
         if self.token.tipo == token:
             filho = self.token.valor
+            if token == "EOL":
+                self.set_linha(self.get_linha()+1)
             if self.get_next_token() == 0:
                 return 0
             if self.get_token() != "NULL":
@@ -156,7 +158,7 @@ class Gramatica:
                 return 0
             else:
                 no_pai.filhos.append(No(no_filho))
-            self.set_linha(self.get_linha()+1)
+            
             no_filho = self.assignment()
             if no_filho == 0:
                 return 0
@@ -341,14 +343,6 @@ class Gramatica:
                 return 0
             else:
                 no_pai.filhos.append(No(token))
-            if self.get_token().valor =="-" or self.get_token().tipo != "AO":
-                return 0
-            else:
-                token = self.match("AO")
-                if token == 0:
-                    return 0
-                else:
-                    no_pai.filhos.append(No(token))
             return no_pai
         else:
             return 0
@@ -486,7 +480,7 @@ def criar_automato(alfabeto,qtd_estados):
     #descomente esses codigos para printar dados do automato
     #analisador_lexico.mostrar_transicoes()
     #print("transições em estrela")
-    analisador_lexico.mostrar_transicoes_estrela()
+    #analisador_lexico.mostrar_transicoes_estrela()
     #definindo os estados de aceitação
     analisador_lexico.definir_aceitacao(3)
     analisador_lexico.definir_aceitacao(5)
@@ -503,9 +497,9 @@ def criar_automato(alfabeto,qtd_estados):
     analisador_lexico.definir_aceitacao(22)
     analisador_lexico.definir_aceitacao(23)
     analisador_lexico.definir_aceitacao(26)
-    analisador_lexico.mostrar_aceitacao()
+    #analisador_lexico.mostrar_aceitacao()
     return analisador_lexico
 gramatica = Gramatica()
 gramatica.set_automato(criar_automato(alfabeto,27))
-gramatica.set_entrada("")
+gramatica.set_entrada("a := b + 10;b := c;")
 gramatica.aplicar_analise()
